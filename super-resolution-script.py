@@ -40,12 +40,19 @@ for img_idx in img_idx_list:
     path_to_image = 'data/sr/' + str(img_idx) + '.jpg'
     for factor in factor_list:        
         # Starts here
-        imgs = load_LR_HR_imgs_sr(path_to_image , imsize, factor, enforse_div32)                
+        imgs = load_LR_HR_imgs_sr(path_to_image , imsize, factor, enforse_div32)     
+        imgs['bicubic_np'], imgs['sharp_np'], imgs['nearest_np'] = get_baselines(imgs['LR_pil'], imgs['HR_pil'])
+        img_bicubics_np = imgs['bicubic_np']         
+        img_sharp_np = imgs['sharp_np']
+        img_nearest_np = imgs['nearest_np']
         
         ### Set up paramters and network
         for noise_type in noise_type_list:
-            output_folder = output_folder_root + "img_" + str(img_idx) + "_factor_" + str(factor) + "_input_" + noise_type
+            output_folder = output_folder_root + "img_" + str(img_idx) + "_factor_" + str(factor) + "_input_" + noise_type + "/"
             os.system("mkdir " + output_folder)
+            skio.imsave(output_folder + "bicubic.jpg", np.clip(img_bicubics_np, 0, 1).transpose(1, 2, 0))
+            skio.imsave(output_folder + "unsharp_mask.jpg", np.clip(img_sharp_np, 0, 1).transpose(1, 2, 0))
+            skio.imsave(output_folder + "nearest.jpg", np.clip(img_nearest_np, 0, 1).transpose(1, 2, 0))
             
             INPUT =     noise_type
             pad   =     'reflection'
@@ -116,9 +123,9 @@ for img_idx in img_idx_list:
                 # History
                 psnr_history.append([psnr_LR, psnr_HR])
                 
-                if PLOT and i % 20 == 0:
-                    out_HR_np = var_to_np(out_HR)
-                    skio.imsave(output_folder + str(i) + ".jpg", np.clip(out_HR_np, 0, 1))
+                if PLOT and i % 50 == 0:
+                    out_HR_np = np.clip(var_to_np(out_HR), 0, 1).transpose(1,2,0)
+                    skio.imsave(output_folder + str(i) + ".jpg", out_HR_np)
             
                 i += 1
                 
@@ -134,23 +141,14 @@ for img_idx in img_idx_list:
             p = get_params(OPT_OVER, net, net_input)
             optimize(OPTIMIZER, p, closure, LR, num_iter)
                         
-            out_HR_np = np.clip(var_to_np(net(net_input)), 0, 1)
+            out_HR_np = np.clip(var_to_np(net(net_input)), 0, 1).transpose(1,2,0)
             skio.imsave(output_folder + "Final.jpg", out_HR_np)
- 
-            upsampler2 = torch.nn.Upsample(scale_factor = 2, mode = 'nearest')
-            net_input_2x = upsampler2(net_input)
-            out_HR_np_2x = np.clip(var_to_np(net(net_input_2x)), 0, 1)
-            skio.imsave(output_folder + "Final_2x.jpg", out_HR_np_2x)
-            
-            upsampler4 = torch.nn.Upsample(scale_factor = 4, mode = 'nearest')
-            net_input_4x = upsampler4(net_input)
-            out_HR_np_4x = np.clip(var_to_np(net(net_input_4x)), 0, 1)
-            skio.imsave(output_folder + "Final_4x.jpg", out_HR_np_4x)
 
-            upsampler8 = torch.nn.Upsample(scale_factor = 8, mode = 'nearest')
-            net_input_8x = upsampler8(net_input)
-            out_HR_np_8x = np.clip(var_to_np(net(net_input_8x)), 0, 1)
-            skio.imsave(output_folder + "Final_8x.jpg", out_HR_np_8x)
+#            upsampler2 = torch.nn.Upsample(scale_factor = 2, mode = 'nearest')
+#            net_input_2x = upsampler2(net_input)
+#            out_HR_np_2x = np.clip(var_to_np(net(net_input_2x)), 0, 1).transpose(1,2,0)
+#            skio.imsave(output_folder + "Final_2x.jpg", out_HR_np_2x)
+            
             
 
 
