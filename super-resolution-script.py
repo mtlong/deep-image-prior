@@ -33,7 +33,7 @@ PLOT = True
 
 # To produce images from the paper we took *_GT.png images from LapSRN viewer for corresponding factor,
 # e.g. x4/zebra_GT.png for factor=4, and x8/zebra_GT.png for factor=8 
-img_idx_list = list(range(1, 18))
+img_idx_list = list(range(10, 18))
 #img_idx_list = [9]
 noise_type_list = ['noise', 'meshgrid']
 num_iter = 15000
